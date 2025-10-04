@@ -1,0 +1,31 @@
+# This is a comment
+entity Entity1 {
+    key keyattr1 keyattr2
+    set setattr1 setattr1
+    key set keysetattr1 key_set-attr2
+    attr attr
+}
+
+entity Entity2 {
+    # another attribute block
+}
+
+relate Teaches(Entity2, Entity1);
+
+entity WeakEnt {
+    key keyattr
+    normalttr1 normalattr2 "An attribute with spaces"
+}
+
+weak relate Provides(single Entity1, require WeakEnt) {
+    someattr
+}
+
+entity Derived1 {
+    # More key stuff like above
+}
+
+entity Derived2;
+
+isa Entity2(cover, overlap) Derived1, Derived2;
+
