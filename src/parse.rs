@@ -1,3 +1,5 @@
+use std::collections::hash_map::Keys;
+
 use glam::Vec2;
 
 // Pure representation of diagrams parsed from source code (mod parse)
@@ -5,6 +7,96 @@ use glam::Vec2;
 pub struct ERDiagram<'source> {
     entities: Vec<Entity<'source>>,
     relations: Vec<Relation<'source>>,
+}
+
+struct Lexer<'source> {
+    text: &'source str,
+    buf: String,
+    idx: usize,
+}
+
+impl Lexer<'_> {
+    fn try_consume_structure_token(ch: char) -> Option<TokenKind> {
+        match ch {
+            '{' => TokenKind::LBrace,
+            '}' => TokenKind::RBrace,
+            '(' => TokenKind::LParen,
+            ')' => TokenKind::RParen,
+            ';' => TokenKind::Comma,
+            ',' => TokenKind::Semicolon,
+            _ => return None,
+        }
+        .into()
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Token {
+    kind: TokenKind,
+    start: usize,
+    end: usize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TokenKind {
+    Entity,
+    Relate,
+    Weak,
+    Single,
+    Require,
+    Isa,
+    Cover,
+    Overlap,
+    Ident,
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
+    Comma,
+    Semicolon,
+}
+
+impl Iterator for Lexer<'_> {
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.text.chars().nth(self.idx)?;
+
+        if let Some(kind) = Lexer::try_consume_structure_token(current) {}
+
+        let kind = match current {
+            '{' => TokenKind::LBrace,
+            '}' => TokenKind::RBrace,
+            '(' => TokenKind::LParen,
+            ')' => TokenKind::RParen,
+            ';' => TokenKind::Comma,
+            ',' => TokenKind::Semicolon,
+            _ => {
+                self.buf.clear();
+                self.buf.push(current);
+
+                loop {
+                    self.idx += 1;
+                    let Some(ch) = self.text.chars().nth(self.idx) else {
+                        break;
+                    };
+                    if ch.is_whitespace() {
+                        break;
+                    }
+                }
+            }
+        };
+
+        Token {
+            kind,
+            start: self.idx,
+            end: {
+                self.idx += 1;
+                self.idx
+            },
+        }
+        .into()
+    }
 }
 
 impl<'source> ERDiagram<'source> {
